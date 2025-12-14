@@ -85,7 +85,7 @@ const LibraryPage = () => {
               <FolderOpen className="w-5 h-5" />
               <span className="text-sm font-medium">Library</span>
             </div>
-            <h1 className="text-3xl font-bold text-white">Your Content</h1>
+            <h1 className="text-3xl font-bold text-white" data-testid="library-title">Your Content</h1>
           </div>
         </div>
 
