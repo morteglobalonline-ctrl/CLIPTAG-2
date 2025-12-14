@@ -1,34 +1,129 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* ClipTag AI - Custom Styles */
+
+/* Primary button styles */
+.btn-primary {
+    @apply bg-[#FF5F1F] text-black font-bold px-6 py-3 rounded-md;
+    @apply hover:bg-[#FF7A45] transition-all duration-300;
+    @apply hover:shadow-[0_0_15px_rgba(255,95,31,0.4)];
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.btn-secondary {
+    @apply bg-white/5 text-white border border-white/10 px-6 py-3 rounded-md;
+    @apply hover:bg-white/10 hover:border-white/20 transition-all duration-300;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.btn-ghost {
+    @apply text-[#A1A1AA] hover:text-white hover:bg-white/5 px-4 py-2 rounded-md;
+    @apply transition-all duration-300;
 }
 
-.App-link {
-    color: #61dafb;
+/* Card styles */
+.card-dark {
+    @apply bg-[#0A0A0A] border border-[#27272A] rounded-xl;
+    @apply hover:border-[#FF5F1F]/50 transition-colors duration-300;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Input styles */
+.input-dark {
+    @apply bg-[#121212] border border-[#27272A] rounded-md px-4 py-3;
+    @apply focus:border-[#FF5F1F] focus:ring-1 focus:ring-[#FF5F1F];
+    @apply text-white placeholder:text-[#52525B] transition-all duration-200;
+}
+
+/* Navigation styles */
+.nav-glass {
+    @apply fixed top-0 left-0 right-0 z-50;
+    @apply bg-black/70 backdrop-blur-lg border-b border-white/5;
+}
+
+/* Sidebar styles */
+.sidebar {
+    @apply fixed left-0 top-0 h-full w-64 bg-[#0A0A0A];
+    @apply border-r border-[#27272A] pt-20;
+}
+
+/* Section spacing */
+.section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+}
+
+/* Container */
+.container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Text colors */
+.text-primary-orange {
+    color: #FF5F1F;
+}
+
+.text-muted-custom {
+    color: #A1A1AA;
+}
+
+/* Background colors */
+.bg-surface {
+    background-color: #0A0A0A;
+}
+
+.bg-elevated {
+    background-color: #121212;
+}
+
+/* Border colors */
+.border-custom {
+    border-color: #27272A;
+}
+
+.border-active {
+    border-color: #FF5F1F;
+}
+
+/* Feature card */
+.feature-card {
+    @apply bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6;
+    @apply hover:border-[#FF5F1F]/50 transition-all duration-300;
+    @apply hover:shadow-[0_0_30px_rgba(255,95,31,0.1)];
+}
+
+/* Pricing card */
+.pricing-card {
+    @apply bg-[#0A0A0A] border border-[#27272A] rounded-xl p-8;
+    @apply transition-all duration-300;
+}
+
+.pricing-card.featured {
+    @apply border-[#FF5F1F] shadow-[0_0_30px_rgba(255,95,31,0.2)];
+}
+
+/* Tool card for dashboard */
+.tool-card {
+    @apply bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6;
+    @apply hover:border-[#FF5F1F]/50 hover:bg-[#0A0A0A]/80;
+    @apply transition-all duration-300 cursor-pointer;
+    @apply flex flex-col items-center text-center gap-4;
+}
+
+.tool-card:hover {
+    @apply shadow-[0_0_20px_rgba(255,95,31,0.15)];
+}
+
+/* Accordion styles */
+.accordion-item {
+    @apply border-b border-[#27272A];
+}
+
+/* Badge styles */
+.badge-orange {
+    @apply bg-[#FF5F1F]/10 text-[#FF5F1F] px-3 py-1 rounded-full text-sm font-medium;
+}
+
+/* Link styles */
+.link-hover {
+    @apply text-[#A1A1AA] hover:text-white transition-colors duration-200;
+}
+
+/* Loading spinner */
+.spinner {
+    @apply animate-spin rounded-full border-2 border-[#27272A] border-t-[#FF5F1F];
 }
