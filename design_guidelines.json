@@ -1,0 +1,132 @@
+{
+  "brand_identity": {
+    "name": "ClipTag AI",
+    "mission": "The most affordable AI video tool on the market.",
+    "aesthetic": "Cyber-Pro",
+    "core_values": ["Speed", "Precision", "Affordability", "Dark Mode Native"],
+    "emotional_tone": "Confident, Electric, Efficient, Premium"
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Outfit, sans-serif",
+      "weights": ["600", "700"],
+      "usage": "All section headers, hero text, feature titles. Use tight tracking (-0.02em)."
+    },
+    "body": {
+      "font_family": "Manrope, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, UI labels, form inputs. High legibility."
+    },
+    "code": {
+      "font_family": "JetBrains Mono, monospace",
+      "weights": ["400"],
+      "usage": "Timestamps, data values, pricing numbers, technical specs."
+    }
+  },
+  "colors": {
+    "mode": "dark",
+    "palette": {
+      "background": {
+        "default": "#050505",
+        "surface": "#0A0A0A",
+        "elevated": "#121212"
+      },
+      "primary": {
+        "main": "#FF5F1F",
+        "hover": "#FF7A45",
+        "dim": "rgba(255, 95, 31, 0.1)",
+        "glow": "0 0 20px rgba(255, 95, 31, 0.4)"
+      },
+      "text": {
+        "primary": "#EDEDED",
+        "secondary": "#A1A1AA",
+        "muted": "#52525B",
+        "inverse": "#000000"
+      },
+      "border": {
+        "default": "#27272A",
+        "active": "#FF5F1F"
+      },
+      "status": {
+        "success": "#10B981",
+        "error": "#EF4444",
+        "warning": "#F59E0B"
+      }
+    },
+    "gradients": {
+      "hero_glow": "radial-gradient(circle at 50% 50%, rgba(255, 95, 31, 0.15) 0%, rgba(5, 5, 5, 0) 70%)",
+      "card_hover": "linear-gradient(180deg, rgba(255, 95, 31, 0.05) 0%, rgba(255, 95, 31, 0) 100%)"
+    }
+  },
+  "layout_system": {
+    "spacing_scale": "Generous. Use p-8, p-12, p-16 for sections. p-6 for cards.",
+    "container_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grids": {
+      "marketing": "Bento Grid (Tetris Mode). Asymmetrical columns (e.g., col-span-8 + col-span-4).",
+      "dashboard": "Control Room Grid. Dense, gap-4, full height panels."
+    },
+    "radius": {
+      "default": "rounded-lg",
+      "button": "rounded-md",
+      "card": "rounded-xl"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#FF5F1F] text-black font-bold hover:bg-[#FF7A45] hover:shadow-[0_0_15px_rgba(255,95,31,0.4)] transition-all duration-300",
+      "secondary": "bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20",
+      "ghost": "text-[#A1A1AA] hover:text-white hover:bg-white/5"
+    },
+    "cards": {
+      "style": "bg-[#0A0A0A] border border-[#27272A] hover:border-[#FF5F1F]/50 transition-colors duration-300",
+      "glass": "bg-black/40 backdrop-blur-xl border border-white/10"
+    },
+    "inputs": {
+      "style": "bg-[#121212] border border-[#27272A] focus:border-[#FF5F1F] focus:ring-1 focus:ring-[#FF5F1F] text-white placeholder:text-[#52525B]"
+    },
+    "navigation": {
+      "style": "Fixed top, glassmorphism (bg-black/70 backdrop-blur-lg), border-b border-white/5"
+    }
+  },
+  "visual_enhancers": {
+    "textures": "Use subtle noise overlay (opacity 0.03) on solid backgrounds to prevent banding.",
+    "glows": "Use 'primary.glow' behind key elements (Hero Image, CTA buttons).",
+    "borders": "1px borders are mandatory for hierarchy. Do not rely on shadows alone in dark mode."
+  },
+  "assets": {
+    "image_urls": [
+      {
+        "category": "hero_background",
+        "url": "https://images.unsplash.com/photo-1696087225391-eb97abf5ba20?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxjb250ZW50JTIwY3JlYXRvciUyMHN0dWRpbyUyMG5lb24lMjBvcmFuZ2V8ZW58MHx8fHwxNzY1NzM4OTE4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Dark creator workspace with neon accents. Use with heavy overlay."
+      },
+      {
+        "category": "abstract_texture",
+        "url": "https://images.unsplash.com/photo-1764367256080-e25ebc65ea9c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRpZ2l0YWwlMjBzb3VuZCUyMHdhdmUlMjBvcmFuZ2V8ZW58MHx8fHwxNzY1NzM4OTIxfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Orange digital gradient/wave. Use for section backgrounds or masking."
+      },
+      {
+        "category": "feature_abstract",
+        "url": "https://images.unsplash.com/photo-1625657395275-3fac378fa9a8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHx2aWRlbyUyMGVkaXRpbmclMjB0aW1lbGluZSUyMGludGVyZmFjZSUyMGRhcmt8ZW58MHx8fHwxNzY1NzM4OTE5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Close up of audio/video controls. Use for 'Precision' feature section."
+      }
+    ],
+    "icons": "Use 'lucide-react'. Stroke width 1.5px for elegance. Color: #A1A1AA (default) or #FF5F1F (active)."
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Install fonts 'Outfit', 'Manrope', 'JetBrains Mono' via Google Fonts.",
+    "2. THEME: Force dark mode in Tailwind config. Do not implement light mode toggle unless requested.",
+    "3. CLEANUP: Remove default React logos and App.css styles. Reset to a clean slate.",
+    "4. SHADCN: When installing Shadcn components, customize the 'slate' base to match our #050505 background.",
+    "5. PRICING: Emphasize the $7.99 price point with a glowing border or badge.",
+    "6. DASHBOARD: Sidebar navigation should be fixed left, dark grey (#0A0A0A). Main content area #050505.",
+    "7. TESTIDS: Add data-testid to all interactive elements (buttons, inputs, links)."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop': No generic centered layouts. Use asymmetry.",
+    "Dark Mode Only: Do not use white backgrounds anywhere.",
+    "Contrast: Ensure text is #EDEDED on dark backgrounds, not #666.",
+    "Micro-interactions: All buttons must have a hover state (brightness up or border glow).",
+    "No Gradients on Text: Keep text solid white/grey for readability. Use gradients on borders or backgrounds only."
+  ]
+}
