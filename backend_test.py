@@ -208,6 +208,9 @@ class ClipTagAPITester:
 
         # Test split-screen generation (uses form data)
         self.test_split_screen_generation()
+        
+        # Test story video generation
+        self.test_story_video_generation()
 
     def test_video_clip_generation(self):
         """Test video clip generation with form data (expects 404 since no video uploaded)"""
