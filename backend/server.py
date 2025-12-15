@@ -522,10 +522,144 @@ async def delete_library_item(item_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted"}
 
+# ==================== STORY VIDEO GENERATION ====================
+
+class StoryVideoRequest(BaseModel):
+    transcript: str
+    style: str = "dramatic"
+    story_length: str = "medium"
+    background: str = "minecraft"
+
+class StoryVideoResponse(BaseModel):
+    id: str
+    status: str
+    message: str
+    captions: str
+    output_url: Optional[str] = None
+    style: str
+    story_length: str
+    background: str
+
+async def generate_story_captions(transcript: str, style: str, story_length: str) -> dict:
+    """Generate optimized captions from transcript based on style and length"""
+    
+    pacing_guide = {
+        "short": "aggressive, fast-paced, maximum hook power, quick cuts between phrases",
+        "medium": "balanced pacing, natural flow, good rhythm for retention",
+        "long": "slower, deliberate, emotional build-up, let moments breathe"
+    }
+    
+    style_guide = {
+        "dramatic": "bold emphasis, intense punctuation, powerful delivery",
+        "mysterious": "slow reveals, ellipses for tension, enigmatic tone",
+        "heartwarming": "gentle flow, emotional beats, touching moments",
+        "suspenseful": "cliff-hangers, sudden pauses, edge-of-seat tension",
+        "educational": "clear structure, key points highlighted, informative tone"
+    }
+    
+    system_message = """You are an expert at creating viral short-form video captions. 
+    Your job is to take a story transcript and format it into perfectly timed caption segments 
+    optimized for TikTok, Reels, and Shorts. Each segment should be 1-3 short lines that 
+    appear on screen one at a time for maximum retention."""
+    
+    prompt = f"""Transform this story transcript into viral video captions:
+
+TRANSCRIPT:
+{transcript}
+
+STYLE: {style} - {style_guide.get(style, style_guide['dramatic'])}
+PACING: {story_length} - {pacing_guide.get(story_length, pacing_guide['medium'])}
+
+Rules:
+1. Split into natural caption segments (1-3 short lines each)
+2. Each segment should be punchy and hook attention
+3. Add "..." for dramatic pauses where appropriate
+4. Capitalize key WORDS for emphasis based on the style
+5. Keep it exactly as the user wrote - don't change the story
+6. Format for vertical video (short lines work better)
+7. Add [BEAT] markers where there should be dramatic pauses
+
+Output the formatted captions only, ready for video overlay."""
+
+    try:
+        content = await generate_ai_content(prompt, system_message)
+        return {
+            "captions": content,
+            "success": True
+        }
+    except Exception as e:
+        logger.error(f"Caption generation error: {e}")
+        # Fallback: just return the original transcript formatted
+        return {
+            "captions": transcript,
+            "success": False
+        }
+
+@api_router.post("/generate/story-video", response_model=StoryVideoResponse)
+async def generate_story_video(
+    request: StoryVideoRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate a viral story video with animated captions"""
+    
+    # Validate inputs
+    valid_styles = ["dramatic", "mysterious", "heartwarming", "suspenseful", "educational"]
+    valid_lengths = ["short", "medium", "long"]
+    valid_backgrounds = ["minecraft", "roblox", "subway", "satisfying", "cooking", "driving"]
+    
+    if request.style not in valid_styles:
+        raise HTTPException(status_code=400, detail=f"Invalid style. Choose from: {', '.join(valid_styles)}")
+    
+    if request.story_length not in valid_lengths:
+        raise HTTPException(status_code=400, detail=f"Invalid length. Choose from: {', '.join(valid_lengths)}")
+    
+    if request.background not in valid_backgrounds:
+        raise HTTPException(status_code=400, detail=f"Invalid background. Choose from: {', '.join(valid_backgrounds)}")
+    
+    if not request.transcript.strip():
+        raise HTTPException(status_code=400, detail="Story transcript is required")
+    
+    # Generate optimized captions
+    caption_result = await generate_story_captions(
+        request.transcript,
+        request.style,
+        request.story_length
+    )
+    
+    # Save to database
+    item_id = str(uuid.uuid4())
+    content_doc = {
+        "id": item_id,
+        "user_id": current_user["id"],
+        "type": "story_video",
+        "title": f"Story Video: {request.transcript[:40]}...",
+        "content": caption_result["captions"],
+        "captions": caption_result["captions"],
+        "style": request.style,
+        "story_length": request.story_length,
+        "background": request.background,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "status": "completed"
+    }
+    
+    await db.content.insert_one(content_doc)
+    
+    return StoryVideoResponse(
+        id=item_id,
+        status="completed",
+        message="Story video captions generated successfully",
+        captions=caption_result["captions"],
+        output_url=None,  # Video rendering would be done by a separate service
+        style=request.style,
+        story_length=request.story_length,
+        background=request.background
+    )
+
 # ==================== OTHER AI GENERATION ROUTES ====================
 
 @api_router.post("/generate/story", response_model=ContentItem)
-async def generate_story(request: GenerateStoryRequest, current_user: dict = Depends(get_current_user)):
+async def generate_story_legacy(request: GenerateStoryRequest, current_user: dict = Depends(get_current_user)):
+    """Legacy story generation endpoint"""
     system_message = """You are a storytelling expert for video content. Create compelling 
     narratives optimized for faceless videos with strong visual descriptions."""
     
