@@ -273,6 +273,114 @@ class ClipTagAPITester:
         except Exception as e:
             self.log_test("Generate Split Screen", False, f"Error: {str(e)}")
 
+    def test_story_video_generation(self):
+        """Test story video generation endpoint"""
+        if not self.token:
+            return
+            
+        print("\n🔍 Testing Story Video Generation...")
+        
+        # Test valid story video generation
+        success, story_video_result = self.run_test(
+            "Generate Story Video - Valid",
+            "POST",
+            "generate/story-video",
+            200,
+            data={
+                "transcript": "Once upon a time, there was a brave knight who saved the kingdom from a terrible dragon.",
+                "style": "dramatic",
+                "story_length": "medium",
+                "background": "minecraft"
+            },
+            auth_required=True
+        )
+        
+        # Test with different valid combinations
+        success, _ = self.run_test(
+            "Generate Story Video - Mysterious Style",
+            "POST",
+            "generate/story-video",
+            200,
+            data={
+                "transcript": "In the shadows of the old mansion, something was watching...",
+                "style": "mysterious",
+                "story_length": "short",
+                "background": "roblox"
+            },
+            auth_required=True
+        )
+        
+        success, _ = self.run_test(
+            "Generate Story Video - Educational Style",
+            "POST",
+            "generate/story-video",
+            200,
+            data={
+                "transcript": "Today we'll learn about the fascinating world of quantum physics.",
+                "style": "educational",
+                "story_length": "long",
+                "background": "cooking"
+            },
+            auth_required=True
+        )
+        
+        # Test validation errors
+        self.run_test(
+            "Generate Story Video - Empty Transcript",
+            "POST",
+            "generate/story-video",
+            400,
+            data={
+                "transcript": "",
+                "style": "dramatic",
+                "story_length": "medium",
+                "background": "minecraft"
+            },
+            auth_required=True
+        )
+        
+        self.run_test(
+            "Generate Story Video - Invalid Style",
+            "POST",
+            "generate/story-video",
+            400,
+            data={
+                "transcript": "Test story content",
+                "style": "invalid_style",
+                "story_length": "medium",
+                "background": "minecraft"
+            },
+            auth_required=True
+        )
+        
+        self.run_test(
+            "Generate Story Video - Invalid Length",
+            "POST",
+            "generate/story-video",
+            400,
+            data={
+                "transcript": "Test story content",
+                "style": "dramatic",
+                "story_length": "invalid_length",
+                "background": "minecraft"
+            },
+            auth_required=True
+        )
+        
+        self.run_test(
+            "Generate Story Video - Invalid Background",
+            "POST",
+            "generate/story-video",
+            400,
+            data={
+                "transcript": "Test story content",
+                "style": "dramatic",
+                "story_length": "medium",
+                "background": "invalid_background"
+            },
+            auth_required=True
+        )
+
     def test_library_endpoints(self):
         """Test library management endpoints"""
         if not self.token:
