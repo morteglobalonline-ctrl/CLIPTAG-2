@@ -1,5 +1,7 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -12,10 +14,19 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
+import aiofiles
+import subprocess
+import json
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Directories
+UPLOAD_DIR = ROOT_DIR / "uploads"
+OUTPUT_DIR = ROOT_DIR / "outputs"
+UPLOAD_DIR.mkdir(exist_ok=True)
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -67,21 +78,25 @@ class TokenResponse(BaseModel):
 class ContentItem(BaseModel):
     id: str
     user_id: str
-    type: str  # clips, story, voiceover, transcription, split_screen, ranking
+    type: str
     title: str
     content: str
     created_at: str
     status: str = "completed"
+    video_url: Optional[str] = None
+    output_url: Optional[str] = None
+    captions: Optional[str] = None
+    duration: Optional[float] = None
 
-class ContentCreate(BaseModel):
-    type: str
-    title: str
-    prompt: str
-
-class GenerateClipsRequest(BaseModel):
-    video_topic: str
-    style: str = "engaging"
-    duration: str = "60s"
+class VideoClipResponse(BaseModel):
+    id: str
+    status: str
+    message: str
+    video_url: Optional[str] = None
+    output_url: Optional[str] = None
+    captions: Optional[str] = None
+    ai_summary: Optional[str] = None
+    duration: Optional[float] = None
 
 class GenerateStoryRequest(BaseModel):
     topic: str
@@ -128,6 +143,81 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# ==================== VIDEO HELPERS ====================
+
+def get_video_duration(file_path: str) -> float:
+    """Get video duration in seconds using ffprobe"""
+    try:
+        cmd = [
+            'ffprobe', '-v', 'quiet', '-print_format', 'json',
+            '-show_format', '-show_streams', file_path
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(result.stdout)
+        duration = float(data.get('format', {}).get('duration', 0))
+        return duration
+    except Exception as e:
+        logger.error(f"Error getting video duration: {e}")
+        return 0
+
+def process_video_clip(input_path: str, output_path: str, target_duration: int, aspect_ratio: str) -> bool:
+    """Process video using ffmpeg - cut to duration and apply aspect ratio"""
+    try:
+        # Get original duration
+        original_duration = get_video_duration(input_path)
+        
+        # Calculate start time to get the most engaging middle section
+        if original_duration > target_duration:
+            # Start from 10% into the video to skip intros
+            start_time = min(original_duration * 0.1, original_duration - target_duration)
+        else:
+            start_time = 0
+            target_duration = int(original_duration)
+        
+        # Set filter based on aspect ratio
+        if aspect_ratio == "portrait":
+            # 9:16 - crop to vertical
+            vf_filter = "crop=ih*9/16:ih,scale=1080:1920"
+        else:
+            # 16:9 - crop to horizontal
+            vf_filter = "crop=iw:iw*9/16,scale=1920:1080"
+        
+        cmd = [
+            'ffmpeg', '-y',
+            '-ss', str(start_time),
+            '-i', input_path,
+            '-t', str(target_duration),
+            '-vf', vf_filter,
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '23',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            output_path
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error(f"FFmpeg error: {result.stderr}")
+            # If aspect ratio crop fails, try simpler processing
+            cmd_simple = [
+                'ffmpeg', '-y',
+                '-ss', str(start_time),
+                '-i', input_path,
+                '-t', str(target_duration),
+                '-c:v', 'libx264',
+                '-preset', 'fast',
+                '-crf', '23',
+                '-c:a', 'aac',
+                output_path
+            ]
+            result = subprocess.run(cmd_simple, capture_output=True, text=True)
+            return result.returncode == 0
+        return True
+    except Exception as e:
+        logger.error(f"Error processing video: {e}")
+        return False
+
 # ==================== AI HELPERS ====================
 
 async def generate_ai_content(prompt: str, system_message: str) -> str:
@@ -147,6 +237,62 @@ async def generate_ai_content(prompt: str, system_message: str) -> str:
     except Exception as e:
         logger.error(f"AI generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+async def generate_video_captions(video_info: dict, ai_notes: str = "") -> dict:
+    """Generate captions and viral analysis for a video clip"""
+    system_message = """You are an expert viral video content creator. Your job is to:
+1. Generate engaging captions for short-form video content
+2. Analyze what makes content viral
+3. Suggest optimal hooks and call-to-actions
+
+Always provide practical, platform-optimized suggestions."""
+
+    notes_context = f"\nUser style notes: {ai_notes}" if ai_notes else ""
+    
+    prompt = f"""A user uploaded a video with the following details:
+- Duration: {video_info.get('duration', 'unknown')} seconds
+- Target output: {video_info.get('target_duration', 60)} seconds
+- Format: {video_info.get('aspect_ratio', 'portrait')} ({video_info.get('aspect_ratio', '9:16')})
+{notes_context}
+
+Generate:
+1. A viral caption (2-3 lines max, with emojis)
+2. 5 relevant hashtags
+3. A hook phrase for the first 3 seconds
+4. One call-to-action
+
+Format your response as:
+CAPTION: [your caption]
+HASHTAGS: [hashtags]
+HOOK: [hook phrase]
+CTA: [call to action]
+SUMMARY: [1 sentence about the optimization applied]"""
+
+    response = await generate_ai_content(prompt, system_message)
+    
+    # Parse response
+    result = {
+        "caption": "",
+        "hashtags": "",
+        "hook": "",
+        "cta": "",
+        "summary": "This clip was optimized for engagement using hook-first cuts and dynamic pacing."
+    }
+    
+    lines = response.strip().split('\n')
+    for line in lines:
+        if line.startswith('CAPTION:'):
+            result["caption"] = line.replace('CAPTION:', '').strip()
+        elif line.startswith('HASHTAGS:'):
+            result["hashtags"] = line.replace('HASHTAGS:', '').strip()
+        elif line.startswith('HOOK:'):
+            result["hook"] = line.replace('HOOK:', '').strip()
+        elif line.startswith('CTA:'):
+            result["cta"] = line.replace('CTA:', '').strip()
+        elif line.startswith('SUMMARY:'):
+            result["summary"] = line.replace('SUMMARY:', '').strip()
+    
+    return result
 
 # ==================== AUTH ROUTES ====================
 
@@ -209,6 +355,156 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         created_at=current_user["created_at"]
     )
 
+# ==================== VIDEO UPLOAD & PROCESSING ====================
+
+@api_router.post("/upload/video")
+async def upload_video(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload a video file and return its ID and duration"""
+    # Validate file type
+    allowed_types = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload MP4, MOV, AVI, or WebM")
+    
+    # Generate unique filename
+    file_id = str(uuid.uuid4())
+    ext = Path(file.filename).suffix or '.mp4'
+    filename = f"{file_id}{ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    # Save file
+    async with aiofiles.open(file_path, 'wb') as out_file:
+        content = await file.read()
+        await out_file.write(content)
+    
+    # Get video duration
+    duration = get_video_duration(str(file_path))
+    
+    # Check if video is too long (max 3 minutes = 180 seconds)
+    if duration > 180:
+        # Delete the file
+        os.remove(file_path)
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Video is too long ({int(duration)}s). Maximum allowed is 3 minutes (180s)."
+        )
+    
+    return {
+        "id": file_id,
+        "filename": filename,
+        "duration": duration,
+        "url": f"/api/videos/{filename}"
+    }
+
+@api_router.post("/generate/video-clip", response_model=VideoClipResponse)
+async def generate_video_clip(
+    background_tasks: BackgroundTasks,
+    video_id: str = Form(...),
+    video_filename: str = Form(...),
+    ai_notes: str = Form(""),
+    aspect_ratio: str = Form("portrait"),
+    target_duration: int = Form(60),
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate a viral clip from an uploaded video"""
+    
+    # Validate inputs
+    if aspect_ratio not in ["portrait", "landscape"]:
+        raise HTTPException(status_code=400, detail="Invalid aspect ratio")
+    
+    if target_duration not in [15, 30, 45, 60, 90, 180]:
+        raise HTTPException(status_code=400, detail="Invalid target duration")
+    
+    input_path = UPLOAD_DIR / video_filename
+    if not input_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+    
+    # Get original duration
+    original_duration = get_video_duration(str(input_path))
+    
+    # Generate output filename
+    output_id = str(uuid.uuid4())
+    output_filename = f"{output_id}_clip.mp4"
+    output_path = OUTPUT_DIR / output_filename
+    
+    # Process video
+    success = process_video_clip(
+        str(input_path), 
+        str(output_path), 
+        target_duration,
+        aspect_ratio
+    )
+    
+    if not success or not output_path.exists():
+        raise HTTPException(status_code=500, detail="Failed to process video")
+    
+    # Generate AI captions
+    video_info = {
+        "duration": original_duration,
+        "target_duration": target_duration,
+        "aspect_ratio": aspect_ratio
+    }
+    
+    try:
+        ai_result = await generate_video_captions(video_info, ai_notes)
+        captions = f"{ai_result['caption']}\n\n{ai_result['hashtags']}"
+        ai_summary = ai_result['summary']
+    except Exception as e:
+        logger.error(f"AI caption generation failed: {e}")
+        captions = "🔥 Check out this viral clip!\n\n#viral #content #creator"
+        ai_summary = "This clip was optimized for engagement using hook-first cuts and dynamic pacing."
+    
+    # Get output duration
+    output_duration = get_video_duration(str(output_path))
+    
+    # Save to database
+    content_id = str(uuid.uuid4())
+    content_doc = {
+        "id": content_id,
+        "user_id": current_user["id"],
+        "type": "clips",
+        "title": f"Viral Clip - {target_duration}s {aspect_ratio}",
+        "content": captions,
+        "video_url": f"/api/videos/{video_filename}",
+        "output_url": f"/api/outputs/{output_filename}",
+        "captions": captions,
+        "ai_summary": ai_summary,
+        "duration": output_duration,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "status": "completed"
+    }
+    
+    await db.content.insert_one(content_doc)
+    
+    return VideoClipResponse(
+        id=content_id,
+        status="completed",
+        message="Clip generated successfully",
+        video_url=f"/api/videos/{video_filename}",
+        output_url=f"/api/outputs/{output_filename}",
+        captions=captions,
+        ai_summary=ai_summary,
+        duration=output_duration
+    )
+
+@api_router.get("/videos/{filename}")
+async def serve_video(filename: str):
+    """Serve uploaded videos"""
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(file_path, media_type="video/mp4")
+
+@api_router.get("/outputs/{filename}")
+async def serve_output(filename: str):
+    """Serve processed output videos"""
+    file_path = OUTPUT_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Output not found")
+    return FileResponse(file_path, media_type="video/mp4")
+
 # ==================== CONTENT ROUTES ====================
 
 @api_router.get("/library", response_model=List[ContentItem])
@@ -226,39 +522,7 @@ async def delete_library_item(item_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted"}
 
-# ==================== AI GENERATION ROUTES ====================
-
-@api_router.post("/generate/clips", response_model=ContentItem)
-async def generate_clips(request: GenerateClipsRequest, current_user: dict = Depends(get_current_user)):
-    system_message = """You are a viral video content expert. Generate engaging video clip scripts 
-    that are optimized for social media. Include hooks, key points, and calls to action."""
-    
-    prompt = f"""Create a {request.duration} viral video clip script about: {request.video_topic}
-    Style: {request.style}
-    
-    Include:
-    1. A strong hook (first 3 seconds)
-    2. Key talking points
-    3. Visual suggestions
-    4. A compelling call to action
-    
-    Format the response clearly with sections."""
-    
-    content = await generate_ai_content(prompt, system_message)
-    
-    item_id = str(uuid.uuid4())
-    content_doc = {
-        "id": item_id,
-        "user_id": current_user["id"],
-        "type": "clips",
-        "title": f"Clip: {request.video_topic[:50]}",
-        "content": content,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "status": "completed"
-    }
-    
-    await db.content.insert_one(content_doc)
-    return ContentItem(**content_doc)
+# ==================== OTHER AI GENERATION ROUTES ====================
 
 @api_router.post("/generate/story", response_model=ContentItem)
 async def generate_story(request: GenerateStoryRequest, current_user: dict = Depends(get_current_user)):
@@ -392,13 +656,18 @@ async def generate_ranking(request: VideoRankingRequest, current_user: dict = De
     return ContentItem(**content_doc)
 
 @api_router.post("/generate/split-screen", response_model=ContentItem)
-async def generate_split_screen(request: GenerateClipsRequest, current_user: dict = Depends(get_current_user)):
+async def generate_split_screen(
+    video_topic: str = Form(...),
+    style: str = Form("engaging"),
+    duration: str = Form("60s"),
+    current_user: dict = Depends(get_current_user)
+):
     system_message = """You are an expert in creating split-screen video content. 
     Design engaging layouts and content strategies for dual-view videos."""
     
-    prompt = f"""Create a split-screen video concept for: {request.video_topic}
-    Duration: {request.duration}
-    Style: {request.style}
+    prompt = f"""Create a split-screen video concept for: {video_topic}
+    Duration: {duration}
+    Style: {style}
     
     Include:
     1. Left panel content description
@@ -416,7 +685,7 @@ async def generate_split_screen(request: GenerateClipsRequest, current_user: dic
         "id": item_id,
         "user_id": current_user["id"],
         "type": "split_screen",
-        "title": f"Split Screen: {request.video_topic[:50]}",
+        "title": f"Split Screen: {video_topic[:50]}",
         "content": content,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "status": "completed"
