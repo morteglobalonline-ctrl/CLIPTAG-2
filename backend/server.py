@@ -541,6 +541,153 @@ class StoryVideoResponse(BaseModel):
     story_length: str
     background: str
 
+class BackgroundCategory(BaseModel):
+    id: str
+    label: str
+    videos: List[str]
+    video_count: int
+
+def get_background_videos() -> dict:
+    """Get all available background videos organized by category"""
+    categories = {
+        "minecraft": {"label": "Minecraft Parkour", "videos": []},
+        "roblox": {"label": "Roblox Gameplay", "videos": []},
+        "subway": {"label": "Subway Runner", "videos": []},
+        "satisfying": {"label": "Satisfying Loops", "videos": []},
+        "cooking": {"label": "ASMR Cooking", "videos": []},
+        "driving": {"label": "GTA City Cruise", "videos": []}
+    }
+    
+    for cat_id in categories:
+        cat_dir = BACKGROUNDS_DIR / cat_id
+        if cat_dir.exists():
+            videos = list(cat_dir.glob("*.mp4"))
+            categories[cat_id]["videos"] = [f"/api/backgrounds/{cat_id}/{v.name}" for v in videos]
+    
+    return categories
+
+def get_target_duration(story_length: str) -> int:
+    """Get target duration in seconds based on story length"""
+    durations = {
+        "short": 25,   # ~20-30s
+        "medium": 42,  # ~35-50s  
+        "long": 65     # ~55-75s
+    }
+    return durations.get(story_length, 42)
+
+def render_story_video(
+    background_path: str,
+    captions: str,
+    output_path: str,
+    target_duration: int,
+    style: str
+) -> bool:
+    """Render a story video with captions overlaid on background"""
+    try:
+        # Clean captions - remove [BEAT] markers and extra whitespace
+        clean_captions = captions.replace("[BEAT]", "").strip()
+        lines = [l.strip() for l in clean_captions.split("\n") if l.strip()]
+        
+        # Create subtitle file (SRT format)
+        srt_path = output_path.replace(".mp4", ".srt")
+        time_per_line = target_duration / max(len(lines), 1)
+        
+        with open(srt_path, "w") as f:
+            for i, line in enumerate(lines):
+                start_time = i * time_per_line
+                end_time = (i + 1) * time_per_line
+                
+                # Format time as HH:MM:SS,mmm
+                start_h = int(start_time // 3600)
+                start_m = int((start_time % 3600) // 60)
+                start_s = int(start_time % 60)
+                start_ms = int((start_time % 1) * 1000)
+                
+                end_h = int(end_time // 3600)
+                end_m = int((end_time % 3600) // 60)
+                end_s = int(end_time % 60)
+                end_ms = int((end_time % 1) * 1000)
+                
+                f.write(f"{i + 1}\n")
+                f.write(f"{start_h:02d}:{start_m:02d}:{start_s:02d},{start_ms:03d} --> {end_h:02d}:{end_m:02d}:{end_s:02d},{end_ms:03d}\n")
+                f.write(f"{line}\n\n")
+        
+        # Style-based font settings
+        style_fonts = {
+            "dramatic": "fontsize=48:fontcolor=white:borderw=3:bordercolor=black",
+            "mysterious": "fontsize=44:fontcolor=#E0E0E0:borderw=2:bordercolor=#1a1a1a",
+            "heartwarming": "fontsize=46:fontcolor=#FFF5E6:borderw=2:bordercolor=#8B4513",
+            "suspenseful": "fontsize=50:fontcolor=#FF4444:borderw=3:bordercolor=black",
+            "educational": "fontsize=42:fontcolor=white:borderw=2:bordercolor=#333333"
+        }
+        font_style = style_fonts.get(style, style_fonts["dramatic"])
+        
+        # FFmpeg command to create video with subtitles
+        # Loop background video if needed, add subtitles
+        cmd = [
+            "ffmpeg", "-y",
+            "-stream_loop", "-1",  # Loop input
+            "-i", background_path,
+            "-t", str(target_duration),
+            "-vf", f"subtitles={srt_path}:force_style='{font_style},Alignment=2,MarginV=150'",
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "23",
+            "-an",  # No audio for now
+            output_path
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        # Clean up SRT file
+        if os.path.exists(srt_path):
+            os.remove(srt_path)
+        
+        if result.returncode != 0:
+            logger.error(f"FFmpeg error: {result.stderr}")
+            # Try simpler approach without subtitles filter
+            cmd_simple = [
+                "ffmpeg", "-y",
+                "-stream_loop", "-1",
+                "-i", background_path,
+                "-t", str(target_duration),
+                "-vf", f"drawtext=text='{lines[0][:50] if lines else 'Story'}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=h-200:borderw=2:bordercolor=black",
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-crf", "23",
+                "-an",
+                output_path
+            ]
+            result = subprocess.run(cmd_simple, capture_output=True, text=True, timeout=120)
+            return result.returncode == 0
+            
+        return True
+    except Exception as e:
+        logger.error(f"Video rendering error: {str(e)}")
+        return False
+
+@api_router.get("/backgrounds")
+async def get_backgrounds():
+    """Get all available background video categories"""
+    categories = get_background_videos()
+    result = []
+    for cat_id, cat_data in categories.items():
+        result.append({
+            "id": cat_id,
+            "label": cat_data["label"],
+            "videos": cat_data["videos"],
+            "video_count": len(cat_data["videos"])
+        })
+    return result
+
+@api_router.get("/backgrounds/{category}/{filename}")
+async def serve_background(category: str, filename: str):
+    """Serve a background video file"""
+    file_path = BACKGROUNDS_DIR / category / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Background video not found: {category}/{filename}")
+    return FileResponse(file_path, media_type="video/mp4")
+
 async def generate_story_captions(transcript: str, style: str, story_length: str) -> dict:
     """Generate optimized captions from transcript based on style and length"""
     
@@ -578,7 +725,7 @@ Rules:
 4. Capitalize key WORDS for emphasis based on the style
 5. Keep it exactly as the user wrote - don't change the story
 6. Format for vertical video (short lines work better)
-7. Add [BEAT] markers where there should be dramatic pauses
+7. One caption segment per line in output
 
 Output the formatted captions only, ready for video overlay."""
 
@@ -620,12 +767,48 @@ async def generate_story_video(
     if not request.transcript.strip():
         raise HTTPException(status_code=400, detail="Story transcript is required")
     
+    # Check for available background videos
+    bg_dir = BACKGROUNDS_DIR / request.background
+    bg_videos = list(bg_dir.glob("*.mp4")) if bg_dir.exists() else []
+    
+    if not bg_videos:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No background videos available for '{request.background}'. Please select a different background category."
+        )
+    
+    # Select first available background video
+    background_path = str(bg_videos[0])
+    
     # Generate optimized captions
     caption_result = await generate_story_captions(
         request.transcript,
         request.style,
         request.story_length
     )
+    
+    # Get target duration based on story length
+    target_duration = get_target_duration(request.story_length)
+    
+    # Generate output filename
+    output_id = str(uuid.uuid4())
+    output_filename = f"{output_id}_story.mp4"
+    output_path = str(OUTPUT_DIR / output_filename)
+    
+    # Render the video
+    success = render_story_video(
+        background_path=background_path,
+        captions=caption_result["captions"],
+        output_path=output_path,
+        target_duration=target_duration,
+        style=request.style
+    )
+    
+    if not success or not os.path.exists(output_path):
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to render story video. Please try again or select a different background."
+        )
     
     # Save to database
     item_id = str(uuid.uuid4())
@@ -636,6 +819,7 @@ async def generate_story_video(
         "title": f"Story Video: {request.transcript[:40]}...",
         "content": caption_result["captions"],
         "captions": caption_result["captions"],
+        "output_url": f"/api/outputs/{output_filename}",
         "style": request.style,
         "story_length": request.story_length,
         "background": request.background,
@@ -648,9 +832,9 @@ async def generate_story_video(
     return StoryVideoResponse(
         id=item_id,
         status="completed",
-        message="Story video captions generated successfully",
+        message="Story video generated successfully",
         captions=caption_result["captions"],
-        output_url=None,  # Video rendering would be done by a separate service
+        output_url=f"/api/outputs/{output_filename}",
         style=request.style,
         story_length=request.story_length,
         background=request.background
