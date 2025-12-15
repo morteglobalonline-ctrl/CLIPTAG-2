@@ -151,21 +151,8 @@ class ClipTagAPITester:
 
         print("\n🔍 Testing AI Generation Endpoints...")
 
-        # Test clips generation (Note: This requires video upload first, so we expect 404 for now)
-        success, clips_result = self.run_test(
-            "Generate Video Clip (No Video)",
-            "POST",
-            "generate/video-clip",
-            400,  # Expect 400 since no video is uploaded
-            data={
-                "video_id": "test-id",
-                "video_filename": "test.mp4",
-                "ai_notes": "Make it engaging",
-                "aspect_ratio": "portrait",
-                "target_duration": 60
-            },
-            auth_required=True
-        )
+        # Test video clip generation (uses form data)
+        self.test_video_clip_generation()
 
         # Test story generation
         success, story_result = self.run_test(
