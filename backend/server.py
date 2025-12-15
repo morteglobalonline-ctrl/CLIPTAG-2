@@ -25,6 +25,7 @@ load_dotenv(ROOT_DIR / '.env')
 # Directories
 UPLOAD_DIR = ROOT_DIR / "uploads"
 OUTPUT_DIR = ROOT_DIR / "outputs"
+BACKGROUNDS_DIR = ROOT_DIR / "assets" / "backgrounds"
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
