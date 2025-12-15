@@ -7,40 +7,23 @@ const FAQPage = () => {
 
   const faqs = [
     {
-      category: 'General',
+      category: 'Getting Started',
       questions: [
         {
-          question: 'Who is ClipTag AI designed for?',
-          answer: 'ClipTag AI is built for content creators of all sizes — from solo YouTubers and TikTok creators to social media managers and marketing teams. Whether you\'re running a faceless channel, need help with video scripts, or want to optimize your content for better reach, our tools are designed with you in mind.'
+          question: 'Do I need video editing experience to use ClipTag AI?',
+          answer: 'Not at all! ClipTag AI is designed for everyone, from complete beginners to experienced creators. Our AI handles all the complex editing — detecting viral moments, applying smart cuts, adding captions, and optimizing pacing. If you can upload a file and click a button, you can create professional-quality content.'
         },
         {
-          question: 'Do I need any video editing experience to use ClipTag AI?',
-          answer: 'Not at all! ClipTag AI is designed to be beginner-friendly. Our AI handles the complex work of generating scripts, voiceover text, SEO suggestions, and more. You just need to provide your ideas and preferences, and our tools will create professional-quality content for you.'
+          question: 'Can I upload my own videos?',
+          answer: 'Absolutely! That\'s what ClipTag AI is built for. Upload any video up to 3 minutes long in MP4, MOV, AVI, or WebM format. Our AI will analyze your footage and automatically extract and optimize the most engaging moments.'
         },
         {
-          question: 'What types of content can I create with ClipTag AI?',
-          answer: 'You can create video clip scripts, story video narratives, split-screen content plans, voiceover scripts, video transcriptions, and SEO optimization strategies. Our tools cover the full spectrum of video content creation needs.'
-        }
-      ]
-    },
-    {
-      category: 'Billing & Plans',
-      questions: [
-        {
-          question: 'Can I cancel my subscription at any time?',
-          answer: 'Absolutely. There are no long-term contracts or cancellation fees. You can cancel your subscription whenever you want directly from your account settings. You\'ll continue to have access to your plan until the end of your current billing period.'
+          question: 'How long does it take to generate a clip?',
+          answer: 'Most clips are generated in under 60 seconds. The exact time depends on your video length and the complexity of processing, but our AI is optimized for speed. You\'ll have your viral-ready clip before you can finish your coffee.'
         },
         {
-          question: 'What happens to my content if I cancel?',
-          answer: 'Your generated content remains in your library for 30 days after cancellation. We recommend downloading anything important before that period ends. If you resubscribe, your previous content will be restored.'
-        },
-        {
-          question: 'Is there a refund policy?',
-          answer: 'Yes. If you\'re not satisfied within the first 7 days of your subscription, contact us for a full refund. No questions asked. We want you to feel confident in your decision to use ClipTag AI.'
-        },
-        {
-          question: 'Do you offer discounts for annual billing?',
-          answer: 'Yes! You save 25% when you choose annual billing instead of monthly. It\'s our way of rewarding customers who commit to growing with us.'
+          question: 'What video formats are supported?',
+          answer: 'We support all major video formats including MP4, MOV (QuickTime), AVI, and WebM. The maximum video length is 3 minutes, and you can output in either portrait (9:16) for TikTok/Reels or landscape (16:9) for YouTube.'
         }
       ]
     },
@@ -48,46 +31,67 @@ const FAQPage = () => {
       category: 'Features & Capabilities',
       questions: [
         {
-          question: 'What platforms does the generated content work with?',
-          answer: 'Our content is optimized for all major platforms including YouTube, TikTok, Instagram Reels, Facebook, Twitter/X, LinkedIn, and more. The scripts and suggestions we generate follow best practices for each platform\'s algorithm and audience expectations.'
+          question: 'What does the AI actually do to my video?',
+          answer: 'Our AI applies several optimizations automatically: (1) Detects the most engaging/viral moments, (2) Creates hook-first structure to capture attention in the first 3 seconds, (3) Applies smart jump cuts to maintain pacing, (4) Adds clean transitions, (5) Generates optimized captions and hashtags. You don\'t need to configure any of this — the AI knows best.'
         },
         {
-          question: 'Are there any limits on how much content I can generate?',
-          answer: 'No artificial limits. Both Standard and Pro plans include unlimited generations. We don\'t believe in credit systems or usage caps that interrupt your creative flow.'
+          question: 'Which platforms can I use the clips for?',
+          answer: 'Everything! TikTok, YouTube Shorts, Instagram Reels, Facebook, Twitter/X, LinkedIn — our clips work everywhere. Choose portrait (9:16) for vertical-first platforms like TikTok and Reels, or landscape (16:9) for traditional YouTube videos.'
         },
         {
-          question: 'How accurate is the Video Ranking / SEO feature?',
-          answer: 'Our SEO suggestions are based on current best practices and algorithm patterns. While no tool can guarantee rankings (YouTube\'s algorithm is always evolving), our recommendations give you the best foundation for discoverability.'
+          question: 'Can I customize the output style?',
+          answer: 'Yes! While our AI applies smart defaults, you can add "AI Notes" to guide the style — like "make it emotional", "fast TikTok pace", or "cut the boring parts". You also choose the format (portrait/landscape) and final duration (15s to 180s).'
+        },
+        {
+          question: 'What other tools are included?',
+          answer: 'Beyond the main Generate Clips feature, ClipTag AI includes: Story Videos (narrative scripts), Split Screen concepts, AI Voiceover scripts, Video Transcription, and Video Ranking/SEO optimization. All tools are included in every plan.'
         }
       ]
     },
     {
-      category: 'Security & Privacy',
+      category: 'Billing & Plans',
       questions: [
         {
-          question: 'Is my content stored securely?',
-          answer: 'Yes. All your data is encrypted in transit and at rest. We use industry-standard security practices to protect your content and personal information.'
+          question: 'Can I cancel my subscription anytime?',
+          answer: 'Yes, absolutely. No contracts, no cancellation fees, no questions asked. Cancel whenever you want directly from your account, and you\'ll keep access until the end of your current billing period. We believe in earning your business every month.'
         },
         {
-          question: 'Do you use my content to train your AI?',
-          answer: 'No. Your content belongs to you. We never use customer-generated content to train or improve our AI models without explicit consent. Your creative work remains yours.'
+          question: 'What\'s the difference between Standard and Pro?',
+          answer: 'Standard ($7.99/mo) includes all AI tools and unlimited generations — perfect for individual creators. Pro ($24.99/mo) adds priority processing, advanced features, API access, and premium support — ideal for serious creators and teams.'
         },
         {
-          question: 'Can I export my content?',
-          answer: 'Absolutely. You can download any content you generate in multiple formats. Your work is portable and not locked into our platform.'
+          question: 'Is there a free trial?',
+          answer: 'We don\'t offer a free tier, but we do offer a 7-day money-back guarantee. Try ClipTag AI risk-free — if you\'re not completely satisfied within the first week, we\'ll refund you in full.'
+        },
+        {
+          question: 'Do you offer annual billing?',
+          answer: 'Yes! Save 25% when you choose annual billing. Standard becomes $5.99/mo and Pro becomes $18.74/mo when paid annually.'
         }
       ]
     },
     {
-      category: 'Comparisons',
+      category: 'Privacy & Security',
+      questions: [
+        {
+          question: 'What happens to my uploaded videos?',
+          answer: 'Your videos are processed securely and stored temporarily for clip generation. We never use your content to train AI models, share it with third parties, or access it beyond what\'s needed to provide the service. You can delete your content anytime.'
+        },
+        {
+          question: 'Who owns the content I create?',
+          answer: 'You do. 100%. All clips, captions, and content generated using ClipTag AI are yours to use commercially, post anywhere, and monetize however you want. We claim no rights to your creations.'
+        }
+      ]
+    },
+    {
+      category: 'Pricing & Value',
       questions: [
         {
           question: 'What makes ClipTag AI more affordable than competitors?',
-          answer: 'We\'ve optimized our AI infrastructure specifically for video content creation, reducing overhead costs. We don\'t spend millions on flashy marketing campaigns or celebrity endorsements. Instead, we pass those savings directly to our customers. The result: premium features at prices that make sense.'
+          answer: 'We\'ve built our AI infrastructure from the ground up for efficiency. No bloated enterprise features you\'ll never use, no celebrity marketing budgets to fund, no VC pressure to overcharge. Just powerful tools at honest prices. We pass the savings directly to creators.'
         },
         {
-          question: 'How is ClipTag AI different from other AI writing tools?',
-          answer: 'Unlike generic AI writers, ClipTag AI is purpose-built for video content. Every feature is designed with creators in mind — from viral hook generation to platform-specific SEO. We understand the unique needs of video creators because that\'s our sole focus.'
+          question: 'Are there any hidden limits or usage caps?',
+          answer: 'No hidden limits. Both Standard and Pro plans include unlimited generations. We don\'t throttle your usage, charge per clip, or surprise you with overage fees. The price you see is the price you pay.'
         }
       ]
     }
@@ -109,8 +113,8 @@ const FAQPage = () => {
               Frequently Asked <span className="text-[#FF5F1F]">Questions</span>
             </h1>
             <p className="text-lg text-[#A1A1AA]">
-              Everything you need to know about ClipTag AI. Can't find what you're looking for? 
-              <a href="/contact" className="text-[#FF5F1F] hover:underline ml-1">Contact us</a>.
+              Everything you need to know about ClipTag AI. Can't find your answer?{' '}
+              <a href="/contact" className="text-[#FF5F1F] hover:underline">Contact us</a>.
             </p>
           </div>
         </div>
