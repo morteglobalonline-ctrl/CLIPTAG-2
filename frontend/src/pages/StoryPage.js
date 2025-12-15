@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -20,7 +20,8 @@ import {
   Sparkle,
   Blocks,
   PersonStanding,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -38,86 +39,95 @@ const StoryPage = () => {
   
   // Step 4: Background Video
   const [background, setBackground] = useState('minecraft');
+  const [backgrounds, setBackgrounds] = useState([]);
+  const [backgroundsLoading, setBackgroundsLoading] = useState(true);
+  const [backgroundError, setBackgroundError] = useState('');
   
   // Generation state
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState(0);
   
   const { getAuthHeader } = useAuth();
 
+  // Fetch available backgrounds on mount
+  useEffect(() => {
+    fetchBackgrounds();
+  }, []);
+
+  const fetchBackgrounds = async () => {
+    setBackgroundsLoading(true);
+    setBackgroundError('');
+    try {
+      const response = await axios.get(`${API}/backgrounds`);
+      setBackgrounds(response.data);
+      // Set default background if available
+      if (response.data.length > 0 && response.data[0].video_count > 0) {
+        setBackground(response.data[0].id);
+      }
+    } catch (err) {
+      setBackgroundError('Failed to load background videos');
+      console.error('Error fetching backgrounds:', err);
+    } finally {
+      setBackgroundsLoading(false);
+    }
+  };
+
   // Story Styles with icons and descriptions
   const storyStyles = [
-    { id: 'dramatic', label: 'Dramatic', icon: Zap, description: 'Bold, intense pacing' },
-    { id: 'mysterious', label: 'Mysterious', icon: Eye, description: 'Slow reveals, tension' },
-    { id: 'heartwarming', label: 'Heartwarming', icon: Heart, description: 'Emotional, touching' },
-    { id: 'suspenseful', label: 'Suspenseful', icon: AlertTriangle, description: 'Edge-of-seat tension' },
-    { id: 'educational', label: 'Educational', icon: GraduationCap, description: 'Clear, informative' }
+    { id: 'dramatic', label: 'Dramatic', icon: Zap },
+    { id: 'mysterious', label: 'Mysterious', icon: Eye },
+    { id: 'heartwarming', label: 'Warm', icon: Heart },
+    { id: 'suspenseful', label: 'Suspense', icon: AlertTriangle },
+    { id: 'educational', label: 'Educate', icon: GraduationCap }
   ];
 
   // Story Lengths (NO seconds/time values)
   const storyLengths = [
-    { id: 'short', label: 'Short', description: 'Fast pacing, maximum retention' },
-    { id: 'medium', label: 'Medium', description: 'Balanced storytelling' },
-    { id: 'long', label: 'Long', description: 'Deeper emotional build' }
+    { id: 'short', label: 'Short', description: 'Fast pacing' },
+    { id: 'medium', label: 'Medium', description: 'Balanced' },
+    { id: 'long', label: 'Long', description: 'Deep build' }
   ];
 
-  // Predefined viral background videos
-  const backgroundVideos = [
-    { 
-      id: 'minecraft', 
-      label: 'Minecraft Parkour', 
-      icon: Blocks,
-      preview: 'https://images.unsplash.com/photo-1627856014754-2907e2355be5?w=400&h=700&fit=crop',
-      color: '#4ADE80'
-    },
-    { 
-      id: 'roblox', 
-      label: 'Roblox Gameplay', 
-      icon: Gamepad2,
-      preview: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=700&fit=crop',
-      color: '#EF4444'
-    },
-    { 
-      id: 'subway', 
-      label: 'Subway Runner', 
-      icon: PersonStanding,
-      preview: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=400&h=700&fit=crop',
-      color: '#FBBF24'
-    },
-    { 
-      id: 'satisfying', 
-      label: 'Satisfying Loops', 
-      icon: Sparkle,
-      preview: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&h=700&fit=crop',
-      color: '#A78BFA'
-    },
-    { 
-      id: 'cooking', 
-      label: 'ASMR Cooking', 
-      icon: ChefHat,
-      preview: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=700&fit=crop',
-      color: '#FB923C'
-    },
-    { 
-      id: 'driving', 
-      label: 'GTA City Cruise', 
-      icon: Car,
-      preview: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=700&fit=crop',
-      color: '#38BDF8'
-    }
-  ];
+  // Background icons mapping
+  const backgroundIcons = {
+    minecraft: Blocks,
+    roblox: Gamepad2,
+    subway: PersonStanding,
+    satisfying: Sparkle,
+    cooking: ChefHat,
+    driving: Car
+  };
+
+  // Background colors
+  const backgroundColors = {
+    minecraft: '#4ADE80',
+    roblox: '#EF4444',
+    subway: '#FBBF24',
+    satisfying: '#A78BFA',
+    cooking: '#FB923C',
+    driving: '#38BDF8'
+  };
 
   const isFormValid = transcript.trim().length > 0;
+  const selectedBg = backgrounds.find(bg => bg.id === background);
+  const hasValidBackground = selectedBg && selectedBg.video_count > 0;
 
   const handleGenerate = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || !hasValidBackground) return;
     
     setLoading(true);
     setError('');
     setResult(null);
+    setProgress(10);
 
     try {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setProgress(prev => Math.min(prev + 10, 90));
+      }, 1000);
+
       const response = await axios.post(`${API}/generate/story-video`, {
         transcript,
         style,
@@ -126,11 +136,17 @@ const StoryPage = () => {
       }, {
         headers: getAuthHeader()
       });
+      
+      clearInterval(progressInterval);
+      setProgress(100);
       setResult(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to generate story video. Please try again.');
+      const errorMessage = err.response?.data?.detail || 'Failed to generate story video. Please try again.';
+      setError(errorMessage);
+      console.error('Generation error:', err);
     } finally {
       setLoading(false);
+      setProgress(0);
     }
   };
 
@@ -167,12 +183,12 @@ const StoryPage = () => {
             {/* STEP 1: Story Transcript */}
             <div className="bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm">
+                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
                   1
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Story Transcript</h2>
-                  <p className="text-[#52525B] text-sm">Write your story exactly as you want it told</p>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-white truncate">Story Transcript</h2>
+                  <p className="text-[#52525B] text-sm truncate">Write your story exactly as you want it told</p>
                 </div>
               </div>
               
@@ -194,19 +210,19 @@ const StoryPage = () => {
               </div>
             </div>
 
-            {/* STEP 2: Story Style */}
+            {/* STEP 2: Story Style - FIXED OVERFLOW */}
             <div className="bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm">
+                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
                   2
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Story Style</h2>
-                  <p className="text-[#52525B] text-sm">Choose the mood and pacing</p>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-white truncate">Story Style</h2>
+                  <p className="text-[#52525B] text-sm truncate">Choose the mood and pacing</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-5 gap-2">
                 {storyStyles.map((s) => {
                   const Icon = s.icon;
                   const isSelected = style === s.id;
@@ -214,17 +230,23 @@ const StoryPage = () => {
                     <button
                       key={s.id}
                       onClick={() => setStyle(s.id)}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
+                      className={`p-3 rounded-xl border-2 transition-all overflow-hidden ${
                         isSelected
                           ? 'border-[#FF5F1F] bg-[#FF5F1F]/10'
                           : 'border-[#27272A] hover:border-[#FF5F1F]/50 bg-[#121212]'
                       }`}
                       data-testid={`style-${s.id}`}
                     >
-                      <Icon className={`w-6 h-6 mx-auto mb-2 ${isSelected ? 'text-[#FF5F1F]' : 'text-[#A1A1AA]'}`} />
-                      <p className={`text-sm font-medium ${isSelected ? 'text-[#FF5F1F]' : 'text-white'}`}>
-                        {s.label}
-                      </p>
+                      <div className="flex flex-col items-center gap-2">
+                        <Icon className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-[#FF5F1F]' : 'text-[#A1A1AA]'}`} />
+                        <span 
+                          className={`text-xs font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-full ${
+                            isSelected ? 'text-[#FF5F1F]' : 'text-white'
+                          }`}
+                        >
+                          {s.label}
+                        </span>
+                      </div>
                     </button>
                   );
                 })}
@@ -234,33 +256,35 @@ const StoryPage = () => {
             {/* STEP 3: Story Length */}
             <div className="bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm">
+                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
                   3
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Story Length</h2>
-                  <p className="text-[#52525B] text-sm">AI adapts pacing automatically</p>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-white truncate">Story Length</h2>
+                  <p className="text-[#52525B] text-sm truncate">AI adapts pacing automatically</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {storyLengths.map((l) => {
                   const isSelected = storyLength === l.id;
                   return (
                     <button
                       key={l.id}
                       onClick={() => setStoryLength(l.id)}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
+                      className={`p-4 rounded-xl border-2 transition-all overflow-hidden ${
                         isSelected
                           ? 'border-[#FF5F1F] bg-[#FF5F1F]/10'
                           : 'border-[#27272A] hover:border-[#FF5F1F]/50 bg-[#121212]'
                       }`}
                       data-testid={`length-${l.id}`}
                     >
-                      <p className={`text-lg font-semibold mb-1 ${isSelected ? 'text-[#FF5F1F]' : 'text-white'}`}>
+                      <p className={`text-base font-semibold mb-1 whitespace-nowrap overflow-hidden text-ellipsis ${
+                        isSelected ? 'text-[#FF5F1F]' : 'text-white'
+                      }`}>
                         {l.label}
                       </p>
-                      <p className="text-[#52525B] text-xs">
+                      <p className="text-[#52525B] text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                         {l.description}
                       </p>
                     </button>
@@ -272,77 +296,103 @@ const StoryPage = () => {
             {/* STEP 4: Background Video */}
             <div className="bg-[#0A0A0A] border border-[#27272A] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm">
+                <div className="w-8 h-8 bg-[#FF5F1F] rounded-lg flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
                   4
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Viral Background Video</h2>
-                  <p className="text-[#52525B] text-sm">Select a high-retention background</p>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-white truncate">Viral Background Video</h2>
+                  <p className="text-[#52525B] text-sm truncate">Select a high-retention background</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {backgroundVideos.map((bg) => {
-                  const Icon = bg.icon;
-                  const isSelected = background === bg.id;
-                  return (
-                    <button
-                      key={bg.id}
-                      onClick={() => setBackground(bg.id)}
-                      className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-[9/12] group ${
-                        isSelected
-                          ? 'border-[#FF5F1F] ring-2 ring-[#FF5F1F]/30'
-                          : 'border-[#27272A] hover:border-[#FF5F1F]/50'
-                      }`}
-                      data-testid={`background-${bg.id}`}
-                    >
-                      {/* Background Image */}
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg.preview})` }}
-                      />
-                      
-                      {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                      
-                      {/* Content */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-end p-4">
+              {backgroundsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-[#FF5F1F] animate-spin" />
+                  <span className="ml-2 text-[#A1A1AA]">Loading backgrounds...</span>
+                </div>
+              ) : backgroundError ? (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <p className="text-red-400 text-sm">{backgroundError}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {backgrounds.map((bg) => {
+                    const Icon = backgroundIcons[bg.id] || Sparkle;
+                    const color = backgroundColors[bg.id] || '#FF5F1F';
+                    const isSelected = background === bg.id;
+                    const hasVideos = bg.video_count > 0;
+                    
+                    return (
+                      <button
+                        key={bg.id}
+                        onClick={() => hasVideos && setBackground(bg.id)}
+                        disabled={!hasVideos}
+                        className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-[9/12] group ${
+                          !hasVideos
+                            ? 'border-[#27272A] opacity-50 cursor-not-allowed'
+                            : isSelected
+                            ? 'border-[#FF5F1F] ring-2 ring-[#FF5F1F]/30'
+                            : 'border-[#27272A] hover:border-[#FF5F1F]/50'
+                        }`}
+                        data-testid={`background-${bg.id}`}
+                      >
+                        {/* Background Color */}
                         <div 
-                          className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
-                            isSelected ? 'bg-[#FF5F1F]' : 'bg-black/50'
-                          }`}
-                          style={{ backgroundColor: isSelected ? '#FF5F1F' : `${bg.color}30` }}
-                        >
-                          <Icon className="w-5 h-5" style={{ color: isSelected ? 'black' : bg.color }} />
+                          className="absolute inset-0"
+                          style={{ backgroundColor: `${color}20` }}
+                        />
+                        
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                        
+                        {/* Content */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-end p-3">
+                          <div 
+                            className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
+                              isSelected ? 'bg-[#FF5F1F]' : 'bg-black/50'
+                            }`}
+                            style={{ backgroundColor: isSelected ? '#FF5F1F' : `${color}30` }}
+                          >
+                            <Icon 
+                              className="w-5 h-5" 
+                              style={{ color: isSelected ? 'black' : color }} 
+                            />
+                          </div>
+                          <p className={`text-xs font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-full px-1 ${
+                            isSelected ? 'text-[#FF5F1F]' : 'text-white'
+                          }`}>
+                            {bg.label}
+                          </p>
+                          {!hasVideos && (
+                            <p className="text-[#EF4444] text-[10px] mt-1">No videos</p>
+                          )}
                         </div>
-                        <p className={`text-sm font-medium text-center ${isSelected ? 'text-[#FF5F1F]' : 'text-white'}`}>
-                          {bg.label}
-                        </p>
-                      </div>
-                      
-                      {/* Selection Indicator */}
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-6 h-6 bg-[#FF5F1F] rounded-full flex items-center justify-center">
-                          <Check className="w-4 h-4 text-black" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                        
+                        {/* Selection Indicator */}
+                        {isSelected && hasVideos && (
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-[#FF5F1F] rounded-full flex items-center justify-center">
+                            <Check className="w-3 h-3 text-black" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Generate Button */}
             <Button
               onClick={handleGenerate}
-              disabled={loading || !isFormValid}
-              className="w-full bg-[#FF5F1F] text-black font-bold py-6 text-lg hover:bg-[#FF7A45] hover:shadow-[0_0_20px_rgba(255,95,31,0.4)] disabled:opacity-50"
+              disabled={loading || !isFormValid || !hasValidBackground}
+              className="w-full bg-[#FF5F1F] text-black font-bold py-6 text-lg hover:bg-[#FF7A45] hover:shadow-[0_0_20px_rgba(255,95,31,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="generate-story"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating Your Story Video...
+                  Creating Your Story Video... {progress > 0 && `${progress}%`}
                 </>
               ) : (
                 <>
@@ -351,6 +401,12 @@ const StoryPage = () => {
                 </>
               )}
             </Button>
+            
+            {!hasValidBackground && !backgroundsLoading && (
+              <p className="text-center text-[#EF4444] text-sm">
+                Please select a background category with available videos
+              </p>
+            )}
           </div>
 
           {/* Output Panel - Takes 2 columns */}
@@ -360,7 +416,10 @@ const StoryPage = () => {
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
-                  {error}
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
                 </div>
               )}
 
@@ -375,6 +434,16 @@ const StoryPage = () => {
                   <p className="text-[#52525B] text-sm text-center max-w-xs">
                     Syncing captions, applying style, and optimizing for retention
                   </p>
+                  {progress > 0 && (
+                    <div className="w-full max-w-xs mt-4">
+                      <div className="h-2 bg-[#27272A] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#FF5F1F] transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : result ? (
                 <div className="space-y-6">
