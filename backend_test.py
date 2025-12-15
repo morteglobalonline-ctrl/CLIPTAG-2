@@ -314,10 +314,10 @@ class ClipTagAPITester:
         old_token = self.token
         self.token = None
 
-        self.run_test("Unauthorized Library Access", "GET", "library", 401, auth_required=True)
-        self.run_test("Unauthorized Profile Access", "GET", "auth/me", 401, auth_required=True)
-        self.run_test("Unauthorized AI Generation", "POST", "generate/clips", 401, 
-                     data={"video_topic": "test", "style": "engaging", "duration": "60s"}, 
+        self.run_test("Unauthorized Library Access", "GET", "library", 403, auth_required=True)
+        self.run_test("Unauthorized Profile Access", "GET", "auth/me", 403, auth_required=True)
+        self.run_test("Unauthorized AI Generation", "POST", "generate/story", 403, 
+                     data={"topic": "test", "style": "engaging", "length": "short"}, 
                      auth_required=True)
 
         # Restore token
