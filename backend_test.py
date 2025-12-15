@@ -219,19 +219,8 @@ class ClipTagAPITester:
             auth_required=True
         )
 
-        # Test split-screen generation
-        success, split_result = self.run_test(
-            "Generate Split Screen",
-            "POST",
-            "generate/split-screen",
-            200,
-            data={
-                "video_topic": "React vs Vue comparison",
-                "style": "educational",
-                "duration": "90s"
-            },
-            auth_required=True
-        )
+        # Test split-screen generation (uses form data)
+        self.test_split_screen_generation()
 
     def test_library_endpoints(self):
         """Test library management endpoints"""
