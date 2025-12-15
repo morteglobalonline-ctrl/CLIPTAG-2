@@ -222,6 +222,35 @@ class ClipTagAPITester:
         # Test split-screen generation (uses form data)
         self.test_split_screen_generation()
 
+    def test_split_screen_generation(self):
+        """Test split-screen generation with form data"""
+        if not self.token:
+            return
+            
+        url = f"{self.base_url}/generate/split-screen"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        form_data = {
+            'video_topic': 'React vs Vue comparison',
+            'style': 'educational', 
+            'duration': '90s'
+        }
+        
+        try:
+            response = requests.post(url, data=form_data, headers=headers, timeout=30)
+            success = response.status_code == 200
+            
+            if success:
+                self.log_test("Generate Split Screen", True, f"Status: {response.status_code}")
+            else:
+                try:
+                    error_data = response.json()
+                    self.log_test("Generate Split Screen", False, f"Expected 200, got {response.status_code} - {error_data}")
+                except:
+                    self.log_test("Generate Split Screen", False, f"Expected 200, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Generate Split Screen", False, f"Error: {str(e)}")
+
     def test_library_endpoints(self):
         """Test library management endpoints"""
         if not self.token:
