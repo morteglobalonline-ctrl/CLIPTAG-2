@@ -71,28 +71,28 @@ const HomePage = () => {
 
   const faqs = [
     {
-      question: 'Who is ClipTag AI for?',
-      answer: 'ClipTag AI is designed for content creators, YouTubers, social media marketers, and anyone looking to create engaging video content without breaking the bank. Whether you run a faceless channel or need help with scripts and optimization, our tools are built for you.'
+      question: 'Do I need video editing experience?',
+      answer: 'Not at all! ClipTag AI handles all the complex editing for you. Simply upload your video, choose your preferences, and let our AI create viral-ready clips. No technical skills required — if you can click a button, you can create amazing content.'
+    },
+    {
+      question: 'Can I upload my own videos?',
+      answer: 'Yes! Upload any video up to 3 minutes long in MP4, MOV, AVI, or WebM format. Our AI will analyze your footage and automatically extract the most engaging moments to create viral clips.'
+    },
+    {
+      question: 'How long does it take to generate a clip?',
+      answer: 'Most clips are generated in under 60 seconds. The AI quickly identifies the best moments, applies smart cuts, adds captions, and optimizes pacing — all automatically.'
     },
     {
       question: 'Can I cancel my subscription anytime?',
-      answer: 'Absolutely. There are no long-term contracts or hidden fees. You can cancel your subscription at any time with just a few clicks, and you\'ll continue to have access until the end of your billing period.'
+      answer: 'Absolutely. No contracts, no hidden fees, no questions asked. Cancel whenever you want and keep access until the end of your billing period. We believe in earning your business, not locking you in.'
     },
     {
-      question: 'Is ClipTag AI beginner friendly?',
-      answer: 'Yes! Our platform is designed with simplicity in mind. Each tool has an intuitive interface that guides you through the process. No video editing experience required.'
+      question: 'Which platforms is this for?',
+      answer: 'Everything! TikTok, YouTube Shorts, Instagram Reels, Facebook, Twitter/X — our AI optimizes content for any platform. Choose portrait (9:16) for vertical feeds or landscape (16:9) for YouTube.'
     },
     {
-      question: 'What platforms does ClipTag AI support?',
-      answer: 'Our generated content works perfectly for YouTube, TikTok, Instagram Reels, Facebook, Twitter/X, and any other platform where video content thrives.'
-    },
-    {
-      question: 'Is my content stored securely?',
-      answer: 'Your privacy matters. All your generated content is stored securely and is only accessible to you. We never share or use your content for training purposes without explicit consent.'
-    },
-    {
-      question: 'What makes ClipTag AI more affordable than competitors?',
-      answer: 'We\'ve optimized our AI infrastructure to deliver premium results at a fraction of the cost. No unnecessary features bloating the price — just the tools you need at prices that make sense.'
+      question: 'What makes ClipTag AI more affordable?',
+      answer: 'We\'ve built our infrastructure from the ground up for efficiency. No bloated features, no celebrity marketing budgets — just powerful AI tools at prices that actually make sense for creators.'
     }
   ];
 
