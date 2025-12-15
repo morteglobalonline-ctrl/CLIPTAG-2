@@ -54,18 +54,18 @@ const HomePage = () => {
   const steps = [
     {
       number: '01',
-      title: 'Choose Your Tool',
-      description: 'Select from our suite of AI-powered video creation tools.'
+      title: 'Upload Your Video',
+      description: 'Drag & drop any video up to 3 minutes. We support MP4, MOV, and more.'
     },
     {
       number: '02',
-      title: 'Input Your Content',
-      description: 'Provide your topic, script, or video details.'
+      title: 'Choose Your Style',
+      description: 'Select format (portrait or landscape), duration, and add optional AI notes.'
     },
     {
       number: '03',
-      title: 'Generate & Download',
-      description: 'Get AI-generated content ready for your videos.'
+      title: 'Download & Share',
+      description: 'Get your viral-optimized clip with auto captions, ready for any platform.'
     }
   ];
 
