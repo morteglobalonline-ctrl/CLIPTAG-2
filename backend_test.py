@@ -209,6 +209,38 @@ class ClipTagAPITester:
         # Test split-screen generation (uses form data)
         self.test_split_screen_generation()
 
+    def test_video_clip_generation(self):
+        """Test video clip generation with form data (expects 404 since no video uploaded)"""
+        if not self.token:
+            return
+            
+        url = f"{self.base_url}/generate/video-clip"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        form_data = {
+            'video_id': 'test-id',
+            'video_filename': 'test.mp4',
+            'ai_notes': 'Make it engaging',
+            'aspect_ratio': 'portrait',
+            'target_duration': '60'
+        }
+        
+        try:
+            response = requests.post(url, data=form_data, headers=headers, timeout=30)
+            # Expect 404 since video file doesn't exist
+            success = response.status_code == 404
+            
+            if success:
+                self.log_test("Generate Video Clip (No Video)", True, f"Status: {response.status_code} (Expected - no video file)")
+            else:
+                try:
+                    error_data = response.json()
+                    self.log_test("Generate Video Clip (No Video)", False, f"Expected 404, got {response.status_code} - {error_data}")
+                except:
+                    self.log_test("Generate Video Clip (No Video)", False, f"Expected 404, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Generate Video Clip (No Video)", False, f"Error: {str(e)}")
+
     def test_split_screen_generation(self):
         """Test split-screen generation with form data"""
         if not self.token:
